@@ -1,12 +1,46 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>Home page</h2>
 <div class="jumbotron">
-    <h1 class="display-4">Hello, world!</h1>
-    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to
-        featured content or information.</p>
+    <h4 class="display-4">Bienvenidos</h4>
+    <p class="lead">Completa los campos para obtener la predicción necesaria</p>
     <hr class="my-4">
-    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
-    <a class="btn btn-primary btn-lg" href="/action" role="button">Learn more</a>
+    <form class="form-inline" action="/go" method="POST">
+        <div class="form-group mb-2">
+            <label for="" class="sr-only">País</label>
+            <input type="text" class="form-control" name="_country" id="" aria-describedby=""
+                placeholder="Ej: Argentina" disabled>
+        </div>
+        <div class="form-group  mb-2">
+            <label for="" class="sr-only">Año de predicción</label>
+            <input type="text" class="form-control" name="_year" id="" placeholder="Ej: 2020" disabled>
+        </div>
+        <div class="form-group  mb-2">
+            <label for="" class="sr-only">Población</label>
+            <input type="number" class="form-control" min="10000" value="10000" minlength="5" name="_population"
+                id="numPopulation" disabled>
+        </div>
+        <br><br>
+        <a class="btn btn-primary btn-lg" href="/action" role="button">Enviar</a>
+
+
+        <!-- <button type="submit">GO</button>-->
+    </form>
+
+    <table class="table">
+        <!-- 
+        <thead>
+            <tr>
+                <td>Year</td>
+                <td>Population</td>
+                <td># Suicides</td>
+            </tr>
+        </thead>
+        <tbody>-->
+            {% for table in tables %}
+            {{titles[loop.index]}}
+            {{ table|safe }}
+            {% endfor %}
+        <!--</tbody>-->
+    </table>
 </div>
 {% endblock %}

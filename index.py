@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, flash
 import numpy as np 
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -14,14 +14,43 @@ from sklearn.linear_model import LinearRegression
 
 app = Flask(__name__)
 
-@app.route('/')
+#settings
+app.secret_key = 'MLsecretKey'
 
+@app.route('/')
 def home():
-    return render_template('index.html')
+    dataset = pd.read_csv('./data/dataset.csv')
+    # Eliminar columnas innecesarias para este algoritmo
+    dataset = dataset.drop(columns=['age', 'sex', 'gdp_for_year ($)', 'country-year','gdp_per_capita ($)', 'generation', 'HDI for year', 'suicides/100k pop'])
+    # Cambiando los nombres para un mejor analisis
+    dataset = dataset.rename(columns={'year':'Year','suicides_no':'NumSuicides','population':'Population'}) 
+    df = pd.DataFrame(data= dataset)
+    # Seleccionar pais
+    _country = "Argentina"
+    # Se filtran los datos que sean netamente del país seleccionado
+    newData = df[df.country == _country]
+    # Eliminar columna de pais porque ya no vuelve a utilizarse
+    newData = newData.drop(columns=['country'])
+    # Se almacena un arreglo con los a;os registrados de dicho pais
+    _yearsCountry = newData.Year.sort_values().unique()
+    # Se realiza una agrupacion sumando las columnas donde coincida el mismo año
+    newData = newData.groupby(by=['Year']).sum()
+    newData['Year'] = _yearsCountry
+    print(newData)
+
+    return render_template('index.html', tables=[newData.to_html(classes='table table-striped')], titles=newData.columns.values)
 
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+@app.route('/go', methods = ['POST'])
+def go():
+    if request.method == 'POST':
+        _population = request.form['_population']
+        print(_population)
+        flash('Set poblation to:' + _population)
+        return redirect(url_for('home'))
 
 @app.route('/action')
 def action():
@@ -40,7 +69,7 @@ def action():
     # Se filtran los datos que sean netamente del país seleccionado
     newData = df[df.country == _country]
     # Eliminar columna de pais porque ya no vuelve a utilizarse
-    dataset = dataset.drop(columns=['country'])
+    newData = newData.drop(columns=['country'])
     # Se almacena un arreglo con los a;os registrados de dicho pais
     _yearsCountry = newData.Year.sort_values().unique()
     # Se realiza una agrupacion sumando las columnas donde coincida el mismo año

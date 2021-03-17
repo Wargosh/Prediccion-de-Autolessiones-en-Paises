@@ -43,7 +43,7 @@ def action():
     dataset = dataset.drop(columns=['country'])
     # Se almacena un arreglo con los a;os registrados de dicho pais
     _yearsCountry = newData.Year.sort_values().unique()
-    # Se realiza una agrupacion sumando las columnas donde coincida el mismo a;o
+    # Se realiza una agrupacion sumando las columnas donde coincida el mismo año
     newData = newData.groupby(by=['Year']).sum()
     newData['Year'] = _yearsCountry
 
@@ -56,7 +56,7 @@ def action():
 
     # ************ Algoritmo de Regresion Lineal ************
     reg = LinearRegression()
-    # variables independientes [A;o, Poblacion]
+    # variables independientes [Año, Población]
     X = np.array([year, population]).T
     # variable dependiente: # de suicidios
     Y = np.array(numSuicides)

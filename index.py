@@ -17,43 +17,77 @@ app = Flask(__name__)
 #settings
 app.secret_key = 'MLsecretKey'
 
+# global vars
+yearPred = 2016
+
 @app.route('/')
 def home():
     dataset = pd.read_csv('./data/dataset.csv')
-    # Eliminar columnas innecesarias para este algoritmo
-    dataset = dataset.drop(columns=['age', 'sex', 'gdp_for_year ($)', 'country-year','gdp_per_capita ($)', 'generation', 'HDI for year', 'suicides/100k pop'])
-    # Cambiando los nombres para un mejor analisis
-    dataset = dataset.rename(columns={'year':'Year','suicides_no':'NumSuicides','population':'Population'}) 
-    df = pd.DataFrame(data= dataset)
-    # Seleccionar pais
-    _country = "Argentina"
-    # Se filtran los datos que sean netamente del país seleccionado
-    newData = df[df.country == _country]
-    # Eliminar columna de pais porque ya no vuelve a utilizarse
-    newData = newData.drop(columns=['country'])
-    # Se almacena un arreglo con los a;os registrados de dicho pais
-    _yearsCountry = newData.Year.sort_values().unique()
-    # Se realiza una agrupacion sumando las columnas donde coincida el mismo año
-    newData = newData.groupby(by=['Year']).sum()
-    newData['Year'] = _yearsCountry
-    print(newData)
-
-    return render_template('index.html', tables=[newData.to_html(classes='table table-striped')], titles=newData.columns.values)
+    _countries = dataset.country.sort_values().unique()
+    print(_countries)
+    return render_template('index.html', Countries = _countries)
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-@app.route('/go', methods = ['POST'])
+@app.route('/select_country', methods = ['POST'])
 def go():
     if request.method == 'POST':
-        _population = request.form['_population']
-        print(_population)
-        flash('Set poblation to:' + _population)
+        aux = request.form['_country']
+
+        if (aux != "Elige un pais..." and aux != ""):
+            # Seleccionar pais
+            _country = aux
+            print(_country)
+            flash(_country[0])
+        else:
+            _country = "Argentina" # deja una seleccion por defecto 
+            flash('Debes seleccionar un pais')
+            return redirect(url_for('home'))
+
+        dataset = pd.read_csv('./data/dataset.csv')
+        # Eliminar columnas innecesarias para este algoritmo
+        dataset = dataset.drop(columns=['age', 'sex', 'gdp_for_year ($)', 'country-year','gdp_per_capita ($)', 'generation', 'HDI for year', 'suicides/100k pop'])
+        # Cambiando los nombres para un mejor analisis
+        dataset = dataset.rename(columns={'year':'Year','suicides_no':'NumSuicides','population':'Population'}) 
+        df = pd.DataFrame(data= dataset)
+        
+        # Se filtran los datos que sean netamente del país seleccionado
+        newData = df[df.country == _country]
+        # Eliminar columna de pais porque ya no vuelve a utilizarse
+        newData = newData.drop(columns=['country'])
+        # Se almacena un arreglo con los a;os registrados de dicho pais
+        _yearsCountry = newData.Year.sort_values().unique()
+        # Se realiza una agrupacion sumando las columnas donde coincida el mismo año
+        newData = newData.groupby(by=['Year']).sum()
+        newData['Year'] = _yearsCountry
+        # se transforma el tipo de dataframe a tuplas para reccorrer los datos desde html
+        arrData = tuple(zip(newData['Year'], newData['Population'], newData['NumSuicides']))
+        print(arrData)
+        # Obtener ultima poblacion
+        _population = newData.loc[newData.index[-1], "Population"]
+        # Obtener ultima poblacion
+        lastYear = _yearsCountry[len(_yearsCountry)-1] + 1
+
+        # Generar gráfica de los datos originales
+        subset = ["NumSuicides"]
+        s = newData[subset]
+        ax = s.plot(marker="o", figsize=(32,12))
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        ax.figure.savefig('./static/imgs/my_plot_origin_' + _country + '.png')
+
+        return render_template('viewDataCountry.html', tables = arrData, country = _country, lastPopulation = _population, yearRecommended = lastYear)
+
+@app.route('/prediction', methods = ['POST'])
+def prediction():
+    if request.method == 'POST':
+        # Seleccionar pais
+        _country = request.form['_country']
+        yearPred = int(request.form['_year'])
+    else:
         return redirect(url_for('home'))
 
-@app.route('/action')
-def action():
     dataset = pd.read_csv('./data/dataset.csv')
     
     # Eliminar columnas innecesarias para este algoritmo
@@ -63,9 +97,6 @@ def action():
     dataset = dataset.rename(columns={'year':'Year','suicides_no':'NumSuicides','population':'Population'}) 
     df = pd.DataFrame(data= dataset)
     
-    # Seleccionar pais
-    _country = "Argentina"
-
     # Se filtran los datos que sean netamente del país seleccionado
     newData = df[df.country == _country]
     # Eliminar columna de pais porque ya no vuelve a utilizarse
@@ -89,16 +120,45 @@ def action():
     X = np.array([year, population]).T
     # variable dependiente: # de suicidios
     Y = np.array(numSuicides)
+    # Entrenar el modelo
+    reg = reg.fit(X, Y)
+    Y_predict = reg.predict(X)
+    # Obtener puntaje de varianza (el puntaje es mas eficiente es 1.0)
+    variance = r2_score(Y, Y_predict)
 
-    #newDataPlot.set_index('Year', inplace=True)
+    # Datos de entrada
+    _year = yearPred
+    _population = newData.loc[newData.index[-1], "Population"]
+
+    # Realizar predicción
+    res_pred = reg.predict([[_year, _population]])
+
+    # Agregar la predicción a los datos originales
+    newDataPlot = newData.append(
+    pd.Series([res_pred[0], _population, _year], index=newData.columns), ignore_index=True)
+    # establecer la columna de año como un campo de tiempo para los plots 
+    newDataPlot.set_index('Year', inplace=True)
+
+    # Generar gráfica de los datos con la predicción
     subset = ["NumSuicides"]
-    s = newData[subset]
-    ax = s.plot(marker="o", figsize=(19,10))
+    ax = newDataPlot[subset].plot(marker="o", figsize=(19,10))
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    ax.figure.savefig('./static/imgs/my_plot.png')
+    plt.plot(_yearsCountry, Y_predict, color='blue')
+    x_real = _yearsCountry
+    y_real = Y
+    plt.plot(x_real, y_real, color='green')
 
-    print(newData)
-    return render_template('page_predict.html')
+    s = newDataPlot[subset]
+    ax = s.plot(marker="o", figsize=(28,12))
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.plot(_yearsCountry, Y_predict, color='blue')
+    x_real = _yearsCountry
+    y_real = Y
+    plt.plot(x_real, y_real, color='green')
+    ax.figure.savefig('./static/imgs/my_plot_predict_' + _country + '.png')
+
+    print(variance)
+    return render_template('page_predict.html', country = _country, year = _year, variance = variance)
 
 if __name__ == '__main__':
     app.run(debug = True)

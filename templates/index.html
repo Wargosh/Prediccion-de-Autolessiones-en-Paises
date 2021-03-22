@@ -4,43 +4,26 @@
     <h4 class="display-4">Bienvenidos</h4>
     <p class="lead">Completa los campos para obtener la predicción necesaria</p>
     <hr class="my-4">
-    <form class="form-inline" action="/go" method="POST">
-        <div class="form-group mb-2">
-            <label for="" class="sr-only">País</label>
-            <input type="text" class="form-control" name="_country" id="" aria-describedby=""
-                placeholder="Ej: Argentina" disabled>
-        </div>
-        <div class="form-group  mb-2">
-            <label for="" class="sr-only">Año de predicción</label>
-            <input type="text" class="form-control" name="_year" id="" placeholder="Ej: 2020" disabled>
-        </div>
-        <div class="form-group  mb-2">
-            <label for="" class="sr-only">Población</label>
-            <input type="number" class="form-control" min="10000" value="10000" minlength="5" name="_population"
-                id="numPopulation" disabled>
-        </div>
-        <br><br>
-        <a class="btn btn-primary btn-lg" href="/action" role="button">Enviar</a>
 
+    <form class="form-inline" action="/select_country" method="POST">
+        <div class="input-group mb-6">
+            <div class="input-group-prepend">
+                <label class="input-group-text" for="inputGroupSelect01">País</label>
+            </div>
+            <select name="_country" class="custom-select" id="inputGroupSelect01">
+                <option selected>Elige un pais...</option>
+                {% for country in Countries %}
+                <option value='{{ country }}'>{{ country }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <!-- <button type="submit">GO</button>-->
+        <div class="form-group mb-6">
+            <button class="btn btn-primary btn-lg" type="submit" name="btnSelectCountry">
+                Seleccionar
+            </button>
+        </div>
+
     </form>
-
-    <table class="table">
-        <!-- 
-        <thead>
-            <tr>
-                <td>Year</td>
-                <td>Population</td>
-                <td># Suicides</td>
-            </tr>
-        </thead>
-        <tbody>-->
-            {% for table in tables %}
-            {{titles[loop.index]}}
-            {{ table|safe }}
-            {% endfor %}
-        <!--</tbody>-->
-    </table>
 </div>
 {% endblock %}

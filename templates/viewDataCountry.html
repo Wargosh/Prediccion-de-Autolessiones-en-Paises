@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<div class="card text-center">
+    <div class="card-header">
+        <a href="../static/imgs/my_plot_origin_{{country}}.png" target="_blank">
+            <img src="../static/imgs/my_plot_origin_{{country}}.png" class="img-fluid img-thumbnail"
+                alt="Datos de {{country}}">
+        </a>
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">Gráfica actual del país de {{ country }}</h5>
+        <p class="card-text">Datos del número de suicidios por año</p>
+        <form class="form-inline" action="/prediction" method="POST">
+            <div class="form-group mb-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Año de predicción:</span>
+                </div>
+                <input type="number" class="form-control" placeholder="Recomendado: {{yearRecommended}}" aria-label="Username" name="_year"
+                    min="2000" value="{{yearRecommended}}" minlength="4" maxlength="5" aria-describedby="basic-addon1">
+            </div>
+
+            <div class="form-group mb-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Población:</span>
+                </div>
+                <input type="number" class="form-control" placeholder="Username" aria-label="Username" name="_population"
+                    min="10000" value="{{lastPopulation}}" minlength="5" aria-describedby="basic-addon1" disabled>
+            </div>
+
+            <input type="hidden" name="_country" value="{{country}}">
+
+            <div class="form-group mb-12">
+                <button class="btn btn-primary btn-lg" type="submit" name="btnSelectCountry">
+                    Realizar predicción
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td><b>Año</b></td>
+                <td><b>Población</b></td>
+                <td><b># Suicidios</b></td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td>{{ table.0 }}</td>
+                <td>{{ table.1 }}</td>
+                <td>{{ table.2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

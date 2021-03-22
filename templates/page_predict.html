@@ -1,10 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="card mb-3">
-    <img src="{{url_for('static', filename='imgs/my_plot.png')}}" class="card-img-top" alt="Predict">
-    <div class="card-body">
-      <h5 class="card-title">Prediccion de Argentina</h5>
-      <p class="card-text">Datos del número de suicidios por año</p>
-    </div>
+  <div class="card-header">
+    <a href="../static/imgs/my_plot_predict_{{country}}.png" target="_blank">
+      <img src="../static/imgs/my_plot_predict_{{country}}.png" class="img-fluid img-thumbnail"
+        alt="Predicción de {{country}}">
+    </a>
   </div>
+  <div class="card-body">
+    <h5 class="card-title">Predicción de {{country}} para el año {{year}}</h5>
+    <p class="card-text">Datos del número de suicidios por año</p>
+    <p class="card-text"><b>Nota:</b> La varianza del algoritmo aplicado en los datos de este pais
+      es de <b>{{variance}}</b>, tomando en cuenta que sera más eficiente mientras mas cerca este de 1.0</p>
+  </div>
+</div>
 {% endblock %}
